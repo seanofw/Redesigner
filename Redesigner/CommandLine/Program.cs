@@ -48,6 +48,8 @@ namespace Redesigner.CommandLine
 		{
 			const string ProgramName = "Redesigner.exe";
 
+			const string Usage = @"Usage: redesigner [-w site.dll] [-r path\to\site] [options] files.aspx ...";
+
 			// Process the command line into meaningful work.
 			CommandLineArguments commandLineArguments;
 			try
@@ -57,13 +59,6 @@ namespace Redesigner.CommandLine
 			catch (Exception e)
 			{
 				Console.WriteLine("{0}: Command-line error:\r\n{1}", ProgramName, e.Message);
-				return;
-			}
-
-			// If there's nothing to do, help them out with a quick-reference message.
-			if (!commandLineArguments.Filenames.Any())
-			{
-				Console.WriteLine(string.Format(@"Usage: {0} [-w website.dll] [-r path\to\root\of\website] [options] files.aspx ...", ProgramName));
 				return;
 			}
 
@@ -82,36 +77,49 @@ namespace Redesigner.CommandLine
 				case ProgramAction.Help:
 					compileContext.Verbose("Action: Show help when the user is confuzzled.");
 					compileContext.Verbose("");
-					Console.Write(string.Format(@"Usage: {0} [-w website.dll] [-r path\to\root\of\website] [options] files.aspx ...
+					Console.Write(string.Format(Usage + @"
 
 Options:
   --help            Show help (you're looking at it).
 
   --website website.dll
-  -w website.dll    The path to the DLL which contains the website's code-behind.
+  -w website.dll    The path to the DLL that contains the website's
+                    code-behind. [required]
 
   --root pathname
-  -r pathname       The path to the website's root, where the web.config file is located.
+  -r pathname       Specify the path to the website's root, where the web.config
+                    file is located. [required]
 
-  --verify          Verify that the existing designer file(s) were generated correctly.
+  --verify          Verify that the existing designer file(s) were
+                    generated correctly.
 
-  --generate        Generate replacement designer file(s) for the given pages/controls.
+  --generate        Generate replacement designer file(s) for the given
+                    pages/controls. [default]
 
-", ProgramName));
+"));
 					break;
 
 				case ProgramAction.Generate:
 					compileContext.Verbose("Action: Generate new designer files.");
 					compileContext.Verbose("");
+					if (!commandLineArguments.Filenames.Any())
+					{
+						Console.WriteLine(Usage);
+						break;
+					}
 					Common.GenerateDesignerFiles(compileContext, commandLineArguments.Filenames, commandLineArguments.RootPath, commandLineArguments.WebsiteDllFileName);
 					break;
 
 				case ProgramAction.Verify:
 					compileContext.Verbose("Action: Verify existing designer files.");
 					compileContext.Verbose("");
+					if (!commandLineArguments.Filenames.Any())
+					{
+						Console.WriteLine(Usage);
+						break;
+					}
 
 					compileContext.Error("The 'verify' feature is not yet implemented.");
-
 					break;
 			}
 		}
