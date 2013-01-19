@@ -32,20 +32,18 @@
 namespace Redesigner.Library
 {
 	/// <summary>
-	/// An interface describing a context in which a compile of a markup file can be performed.
-	/// This mainly exists to share version numbers and provide consistent error-reporting.
+	/// A single declaration of a property in a designer file.
 	/// </summary>
-	public interface ICompileContext
+	public class DesignerPropertyDeclaration
 	{
-		void BeginTask(int filenameCount);
-		void BeginFile(string filename);
-		void EndFile(string filename);
+		/// <summary>
+		/// The fully-qualified type name (without assembly) for the type of this property.
+		/// </summary>
+		public string PropertyTypeName { get; set; }
 
-		int VerboseNesting { get; set; }
-		void Verbose(string format, params object[] args);
-
-		void Warning(string format, params object[] args);
-
-		void Error(string format, params object[] args);
+		/// <summary>
+		/// The name of this property.
+		/// </summary>
+		public string Name { get; set; }
 	}
 }

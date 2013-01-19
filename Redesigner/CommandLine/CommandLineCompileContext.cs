@@ -2,7 +2,7 @@
 //
 //  Redesigner
 //
-//  Copyright (c) 2012 by Sean Werkema
+//  Copyright (c) 2012-3 by Sean Werkema
 //  All rights reserved.
 //
 //  This software is released under the terms of the "New BSD License," as follows:
@@ -41,10 +41,38 @@ namespace Redesigner.CommandLine
 
 		private readonly string _programName;
 
+		private int _filenameCount;
+
 		public CommandLineCompileContext(string programName, CommandLineArguments commandLineArguments)
 		{
 			_commandLineArguments = commandLineArguments;
 			_programName = programName;
+		}
+
+		public void BeginTask(int filenameCount)
+		{
+			_filenameCount = filenameCount;
+		}
+
+		/// <summary>
+		/// If we are compiling more than one file, and we're not in verbose mode, display the name of
+		/// the file that we are compiling.
+		/// </summary>
+		/// <param name="filename">The name of the file to display.</param>
+		public void BeginFile(string filename)
+		{
+			if (_filenameCount > 1 && !_commandLineArguments.Verbose && !_commandLineArguments.Quiet)
+			{
+				Console.WriteLine(filename + "...");
+			}
+		}
+
+		/// <summary>
+		/// Called to notify us when the current file has finished processing.
+		/// </summary>
+		/// <param name="filename"></param>
+		public void EndFile(string filename)
+		{
 		}
 
 		/// <summary>

@@ -29,23 +29,40 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+using System.Collections.Generic;
+
 namespace Redesigner.Library
 {
 	/// <summary>
-	/// An interface describing a context in which a compile of a markup file can be performed.
-	/// This mainly exists to share version numbers and provide consistent error-reporting.
+	/// The complete result of having parsed a .designer.cs file.
 	/// </summary>
-	public interface ICompileContext
+	public class DesignerInfo
 	{
-		void BeginTask(int filenameCount);
-		void BeginFile(string filename);
-		void EndFile(string filename);
+		/// <summary>
+		/// The namespace in which the .designer class declaration was found.
+		/// </summary>
+		public string Namespace { get; set; }
 
-		int VerboseNesting { get; set; }
-		void Verbose(string format, params object[] args);
+		/// <summary>
+		/// The classname of the first (and only) class declared in the .designer file.
+		/// </summary>
+		public string ClassName { get; set; }
 
-		void Warning(string format, params object[] args);
+		/// <summary>
+		/// The full typename of the first (and only) class declared in the .designer file.
+		/// </summary>
+		public string FullTypeName
+		{
+			get
+			{
+				return Namespace + "." + ClassName;
+			}
+		}
 
-		void Error(string format, params object[] args);
+		/// <summary>
+		/// The complete list of the properties that were declared in this .designer file.
+		/// </summary>
+		public List<DesignerPropertyDeclaration> PropertyDeclarations { get { return _propertyDeclarations; } set { _propertyDeclarations = value; } }
+		private List<DesignerPropertyDeclaration> _propertyDeclarations = new List<DesignerPropertyDeclaration>();
 	}
 }

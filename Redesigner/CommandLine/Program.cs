@@ -2,7 +2,7 @@
 //
 //  Redesigner
 //
-//  Copyright (c) 2012 by Sean Werkema
+//  Copyright (c) 2012-3 by Sean Werkema
 //  All rights reserved.
 //
 //  This software is released under the terms of the "New BSD License," as follows:
@@ -30,6 +30,7 @@
 //-------------------------------------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Redesigner.Library;
@@ -42,9 +43,28 @@ namespace Redesigner.CommandLine
 	public class Program
 	{
 		/// <summary>
+		/// Possible exit codes from this program.  Following traditional command-line behavior, success is zero.
+		/// </summary>
+		public enum ExitCode
+		{
+			// Success.
+			Success = 0,
+
+			// Startup failures.
+			NothingToDo = 1,
+			Help = 2,
+			CommandLineError = 3,
+
+			// Processing failures.
+			FailedGeneration = -1,
+			FailedValidation = -2,
+			InternalError = -3,
+		}
+
+		/// <summary>
 		/// The main entry point of the program.  Decodes command-line parameters, and kicks off actions.
 		/// </summary>
-		public static void Main(string[] args)
+		public static int Main(string[] args)
 		{
 			const string ProgramName = "Redesigner.exe";
 
@@ -59,7 +79,7 @@ namespace Redesigner.CommandLine
 			catch (Exception e)
 			{
 				Console.WriteLine("{0}: Command-line error:\r\n{1}", ProgramName, e.Message);
-				return;
+				return (int)ExitCode.CommandLineError;
 			}
 
 			// Begin doing the actual compiling task.
@@ -72,7 +92,7 @@ namespace Redesigner.CommandLine
 				case ProgramAction.Nothing:
 					compileContext.Verbose("Action: Do nothing.");
 					compileContext.Verbose("");
-					break;
+					return (int)ExitCode.NothingToDo;
 
 				case ProgramAction.Help:
 					compileContext.Verbose("Action: Show help when the user is confuzzled.");
@@ -97,30 +117,42 @@ Options:
                     pages/controls. [default]
 
 "));
-					break;
+					return (int)ExitCode.Help;
 
 				case ProgramAction.Generate:
-					compileContext.Verbose("Action: Generate new designer files.");
-					compileContext.Verbose("");
-					if (!commandLineArguments.Filenames.Any())
 					{
-						Console.WriteLine(Usage);
-						break;
+						compileContext.Verbose("Action: Generate new designer files.");
+						compileContext.Verbose("");
+
+						if (!commandLineArguments.Filenames.Any())
+						{
+							Console.WriteLine(Usage);
+							return (int)ExitCode.NothingToDo;
+						}
+
+						IEnumerable<string> filenames = Common.ResolveFilenames(commandLineArguments.Filenames);
+						bool result = Common.GenerateDesignerFiles(compileContext, filenames, commandLineArguments.RootPath, commandLineArguments.WebsiteDllFileName);
+						return result ? (int)ExitCode.Success : (int)ExitCode.FailedGeneration;
 					}
-					Common.GenerateDesignerFiles(compileContext, commandLineArguments.Filenames, commandLineArguments.RootPath, commandLineArguments.WebsiteDllFileName);
-					break;
 
 				case ProgramAction.Verify:
-					compileContext.Verbose("Action: Verify existing designer files.");
-					compileContext.Verbose("");
-					if (!commandLineArguments.Filenames.Any())
 					{
-						Console.WriteLine(Usage);
-						break;
+						compileContext.Verbose("Action: Verify existing designer files.");
+						compileContext.Verbose("");
+
+						if (!commandLineArguments.Filenames.Any())
+						{
+							Console.WriteLine(Usage);
+							return (int)ExitCode.NothingToDo;
+						}
+
+						IEnumerable<string> filenames = Common.ResolveFilenames(commandLineArguments.Filenames);
+						bool result = Common.VerifyDesignerFiles(compileContext, filenames, commandLineArguments.RootPath, commandLineArguments.WebsiteDllFileName);
+						return result ? (int)ExitCode.Success : (int)ExitCode.FailedValidation;
 					}
 
-					compileContext.Error("The 'verify' feature is not yet implemented.");
-					break;
+				default:
+					return (int)ExitCode.InternalError;
 			}
 		}
 	}
