@@ -39,7 +39,7 @@ namespace Redesigner.Library
 	{
 		void BeginTask(int filenameCount);
 		void BeginFile(string filename);
-		void EndFile(string filename);
+		void EndFile(string filename, bool succeeded);
 
 		int VerboseNesting { get; set; }
 		void Verbose(string format, params object[] args);

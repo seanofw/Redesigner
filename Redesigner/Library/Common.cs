@@ -86,7 +86,7 @@ namespace Redesigner.Library
 			}
 			catch (Exception e)
 			{
-				compileContext.Error("Cannot read {0}:\r\n{1}", Path.Combine(rootPath, WebConfigFilename), e.Message);
+				compileContext.Error("Cannot load {0}:\r\n{1}", Path.Combine(rootPath, WebConfigFilename), e.Message);
 				return false;
 			}
 
@@ -124,8 +124,9 @@ namespace Redesigner.Library
 				compileContext.VerboseNesting++;
 
 				compileContext.BeginFile(filename);
-				result &= GenerateDesignerForFilename(compileContext, filename, tagRegistrations, assemblyLoader, assemblyDirectory, rootPath);
-				compileContext.EndFile(filename);
+				bool succeeded = GenerateDesignerForFilename(compileContext, filename, tagRegistrations, assemblyLoader, assemblyDirectory, rootPath);
+				result &= succeeded;
+				compileContext.EndFile(filename, succeeded);
 
 				compileContext.VerboseNesting--;
 				compileContext.Verbose("");
@@ -155,6 +156,13 @@ namespace Redesigner.Library
 				compileContext.Error("{0}: Failed to load markup file:\r\n{1}", filename, e.Message);
 				compileContext.Verbose("Stopping file processing due to exception.  Stack trace:\r\n{0}", e.StackTrace);
 				return false;
+			}
+
+			// If we're not inheriting a real class, there's no reason for a designer file to exist.
+			if (markupInfo.ClassType == null)
+			{
+				compileContext.Verbose("Skipping generating designer file because markup does not have an Inherits=\"...\" attribute.", filename);
+				return true;
 			}
 
 			// Generate the output text for the new .designer.cs file.
@@ -208,7 +216,7 @@ namespace Redesigner.Library
 			}
 			catch (Exception e)
 			{
-				compileContext.Error("Cannot read {0}:\r\n{1}", Path.Combine(rootPath, WebConfigFilename), e.Message);
+				compileContext.Error("Cannot load {0}:\r\n{1}", Path.Combine(rootPath, WebConfigFilename), e.Message);
 				return false;
 			}
 
@@ -247,8 +255,9 @@ namespace Redesigner.Library
 				compileContext.VerboseNesting++;
 
 				compileContext.BeginFile(filename);
-				result &= VerifyDesignerForFilename(compileContext, filename, tagRegistrations, assemblyLoader, assemblyDirectory, rootPath);
-				compileContext.EndFile(filename);
+				bool succeeded = VerifyDesignerForFilename(compileContext, filename, tagRegistrations, assemblyLoader, assemblyDirectory, rootPath);
+				result &= succeeded;
+				compileContext.EndFile(filename, succeeded);
 
 				compileContext.VerboseNesting--;
 				compileContext.Verbose("");
@@ -281,6 +290,12 @@ namespace Redesigner.Library
 				return false;
 			}
 
+			if (markupInfo.ClassType == null)
+			{
+				compileContext.Verbose("Skipping verification of .designer file, because markup has no Inherits=\"...\" attribute and therefore has no .designer file.", filename);
+				return true;
+			}
+
 			compileContext.Verbose(string.Empty);
 
 			// Read and parse the current .designer.cs file.
@@ -291,7 +306,7 @@ namespace Redesigner.Library
 			}
 			catch (Exception e)
 			{
-				compileContext.Error("{0}: Cannot read designer file:\r\n{1}", filename, e.Message);
+				compileContext.Error("{0}: Cannot load designer file:\r\n{1}", filename, e.Message);
 				compileContext.Verbose("Stopping file processing due to exception.  Stack trace:\r\n{0}", e.StackTrace);
 				return false;
 			}
@@ -317,6 +332,11 @@ namespace Redesigner.Library
 			compileContext.Verbose("Comparing classnames.");
 
 			// First, make sure the type names match; we *should* be talking about the same classes here.
+			if (markupInfo.ClassType == null)
+			{
+				compileContext.Error("{0}: Designer file exists, but markup file has no Inherits=\"...\" attribute.", filename);
+				return false;
+			}
 			if (markupInfo.ClassType.FullName != designerInfo.FullTypeName)
 			{
 				compileContext.Error("{0}: Designer file and markup file specify different type names (\"{1}\" in the markup, and \"{2}\" in the designer file.",
@@ -366,12 +386,12 @@ namespace Redesigner.Library
 			if (duplicateMarkupProperties.Count > 0)
 			{
 				compileContext.Error("{0}: Malformed markup error: Found multiple controls in the markup that have the same ID.  Stopping verification now due to invalid markup file.  Duplicate IDs: {1}",
-					filename, Join(duplicateMarkupProperties, ","));
+					filename, Join(duplicateMarkupProperties, ", "));
 			}
 			if (duplicateDesignerProperties.Count > 0)
 			{
 				compileContext.Error("{0}: Malformed designer error: Found multiple property declarations in the .designer file that have the same name.  Stopping verification now due to invalid designer file.  Duplicate names: {1}",
-					filename, Join(duplicateDesignerProperties, ","));
+					filename, Join(duplicateDesignerProperties, ", "));
 			}
 			if (duplicateMarkupProperties.Count > 0 || duplicateDesignerProperties.Count > 0)
 				return false;
@@ -393,12 +413,12 @@ namespace Redesigner.Library
 			if (missingDesignerProperties.Count > 0)
 			{
 				compileContext.Error("{0}: Missing property error: Found controls declared in the markup that do not exist in the .designer file.  Missing IDs: {1}",
-					filename, Join(missingDesignerProperties, ","));
+					filename, Join(missingDesignerProperties, ", "));
 			}
 			if (missingMarkupProperties.Count > 0)
 			{
 				compileContext.Error("{0}: Missing control error: Found property declarations in the .designer file that have no control declaration in the markup.  Missing controls: {1}",
-					filename, Join(missingMarkupProperties, ","));
+					filename, Join(missingMarkupProperties, ", "));
 			}
 
 			// We've now established that both files refer to the same set of names.  We now need to check

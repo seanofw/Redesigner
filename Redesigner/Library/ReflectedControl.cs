@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Web.UI;
 
 namespace Redesigner.Library
 {
@@ -75,9 +76,20 @@ namespace Redesigner.Library
 		public readonly System.Web.UI.ParseChildrenAttribute ParseChildrenAttribute;
 
 		/// <summary>
+		/// The [ControlBuilder] attribute for this control, if one exists.
+		/// </summary>
+		public readonly System.Web.UI.ControlBuilderAttribute ControlBuilderAttribute;
+
+		/// <summary>
 		/// All of the properties for this control that can be set within the markup.
 		/// </summary>
 		public readonly Dictionary<string, ReflectedControlProperty> ControlProperties;
+
+		/// <summary>
+		/// If the [ParseChildren] attribute says that this class has a default collection property
+		/// into which child controls will be parsed, this is that default collection property.
+		/// </summary>
+		public ReflectedControlProperty DefaultCollectionProperty;
 
 		/// <summary>
 		/// A static "special" tag registration for the HTML controls --- any standard HTML elements
@@ -143,8 +155,40 @@ namespace Redesigner.Library
 			System.Web.UI.ParseChildrenAttribute[] parseChildrenAttributes = (System.Web.UI.ParseChildrenAttribute[])ControlType.GetCustomAttributes(typeof(System.Web.UI.ParseChildrenAttribute), true);
 			ParseChildrenAttribute = parseChildrenAttributes.Length == 0 ? null : parseChildrenAttributes[0];
 
+			// Extract the [ControlBuilder] attribute, if it has one.
+			System.Web.UI.ControlBuilderAttribute[] controlBuilderAttributes = (System.Web.UI.ControlBuilderAttribute[])ControlType.GetCustomAttributes(typeof(System.Web.UI.ControlBuilderAttribute), true);
+			ControlBuilderAttribute = controlBuilderAttributes.Length == 0 ? null : controlBuilderAttributes[0];
+
 			// Extract the type's properties, since their declarations control what's legal in the markup.
 			ControlProperties = CollectControlProperties(compileContext, ControlType, this);
+
+			// HtmlControls have to be handled specially, since they have [ParseChildren(true)] in many cases but
+			// aren't really using it for anything.
+			if (ControlType.Namespace == _htmlTagRegistration.Namespace)
+			{
+				ParseChildrenAttribute = new ParseChildrenAttribute(false);
+			}
+
+			// Validate the ParseChildrenAttribute, which may be broken or weird.
+			if (ParseChildrenAttribute != null)
+			{
+				if (!string.IsNullOrEmpty(ParseChildrenAttribute.DefaultProperty))
+				{
+					string propertyName = ParseChildrenAttribute.DefaultProperty.ToLower();		// ASP.NET also ignores case on this; see internals of ControlBuilder.CreateChildBuilder() for details.
+					if (!ControlProperties.ContainsKey(propertyName))
+					{
+						throw new InvalidOperationException(string.Format("The [ParseChildren] attribute on class \"{0}\" names a default property \"{1}\" that does not exist in that class.",
+							ControlType.FullName, ParseChildrenAttribute.DefaultProperty));
+					}
+
+					DefaultCollectionProperty = ControlProperties[propertyName];
+					if (!DefaultCollectionProperty.IsCollectionProperty)
+					{
+						throw new InvalidOperationException(string.Format("The [ParseChildren] attribute on class \"{0}\" names a default property \"{1}\" that is not a collection property.  The default property must always be a collection property.",
+							ControlType.FullName, ParseChildrenAttribute.DefaultProperty));
+					}
+				}
+			}
 		}
 
 		/// <summary>

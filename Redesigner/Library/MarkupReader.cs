@@ -179,6 +179,11 @@ namespace Redesigner.Library
 		#region Static Data
 
 		/// <summary>
+		/// A list of types that includes all types.
+		/// </summary>
+		private static readonly List<Type> _allTypes = new List<Type> { typeof(object) };
+
+		/// <summary>
 		/// A list of types that only includes controls.
 		/// </summary>
 		private static readonly List<Type> _justControlTypes = new List<Type> { typeof(System.Web.UI.Control) };
@@ -769,26 +774,30 @@ namespace Redesigner.Library
 
 			// It should have an inherits="" attribute that tells us the classname of the code-behind.
 			string inherits = tag["inherits"];
+			Type mainDirectiveType;
 			if (string.IsNullOrEmpty(inherits))
 			{
-				Error("Main <%@ ... %> directive is missing an Inherits=\"...\" attribute.");
+				Warning("Main <%@ ... %> directive is missing an Inherits=\"...\" attribute.  No code-behind is presumed to exist for this markup.");
+				mainDirectiveType = null;
 			}
+			else
+			{
+				// Find the .NET class type that matches the given classname of the code-behind.
+				mainDirectiveType = _assemblies.PrimaryAssembly.GetType(inherits);
+				if (mainDirectiveType == null)
+				{
+					Warning("Main <%@ ... %> directive says this markup inherits \"{0}\", but that class does not exist in the compiled website DLL.", inherits);
+				}
 
-			// Find the .NET class type that matches the given classname of the code-behind.
-			Type mainDirectiveType = _assemblies.PrimaryAssembly.GetType(inherits);
-			if (mainDirectiveType == null)
-			{
-				Warning("Main <%@ ... %> directive says this markup inherits \"{0}\", but that class does not exist in the compiled website DLL.", inherits);
-			}
-
-			// Make sure that the type of the code-behind is a Page for pages and a UserControl for user controls.
-			if (tag.TagName == "page" && !typeof(System.Web.UI.Page).IsAssignableFrom(mainDirectiveType))
-			{
-				Warning("Main <%@ ... %> directive says this markup inherits \"{0}\", but the class in the compiled website DLL does not inherit from System.Web.UI.Page!", inherits);
-			}
-			else if (tag.TagName == "control" && !typeof(System.Web.UI.UserControl).IsAssignableFrom(mainDirectiveType))
-			{
-				Warning("Main <%@ ... %> directive says this markup inherits \"{0}\", but the class in the compiled website DLL does not inherit from System.Web.UI.UserControl!", inherits);
+				// Make sure that the type of the code-behind is a Page for pages and a UserControl for user controls.
+				if (tag.TagName == "page" && !typeof(System.Web.UI.Page).IsAssignableFrom(mainDirectiveType))
+				{
+					Warning("Main <%@ ... %> directive says this markup inherits \"{0}\", but the class in the compiled website DLL does not inherit from System.Web.UI.Page!", inherits);
+				}
+				else if (tag.TagName == "control" && !typeof(System.Web.UI.UserControl).IsAssignableFrom(mainDirectiveType))
+				{
+					Warning("Main <%@ ... %> directive says this markup inherits \"{0}\", but the class in the compiled website DLL does not inherit from System.Web.UI.UserControl!", inherits);
+				}
 			}
 
 			_mainDirective = tag;
@@ -1056,7 +1065,7 @@ namespace Redesigner.Library
 		private void ParseTagAsProperty(Match match, ReflectedControl reflectedControl)
 		{
 			//
-			// There are three scenarios here we have to consider:
+			// There are four scenarios here we have to consider:
 			//
 			//   1.  If the property that's matched is an ITemplate, and it's declared with [TemplateInstance.Single],
 			//        then the markup contained inside it must be processed normally until a closing </tagname>
@@ -1068,6 +1077,10 @@ namespace Redesigner.Library
 			//   3.  If the property that's matched is an IEnumerable type, we need to process its children until a closing
 			//        </tagname>, and declare those children in the designer file.
 			//
+			//   4.  If there is no property that's matched, but we have a DefaultCollectionProperty for this control
+			//        assigned by its [ParseChildren] attribute, then we have an implicit property match, and include
+			//        the control in that collection (and generate an output declaration for it).
+			//
 			// Scenarios 2 and 3 can conveniently be handled by ParseText() using just different ending tags.
 
 			Tag tag = new Tag(match);
@@ -1076,9 +1089,18 @@ namespace Redesigner.Library
 			// Find the property that matches this tag.
 			if (!reflectedControl.ControlProperties.ContainsKey(tagName))
 			{
-				Error("No property named '{0}' exists inside class {1}.", tagName, reflectedControl.ControlType.FullName);
+				if (reflectedControl.DefaultCollectionProperty == null)
+				{
+					Error("No property named \"{0}\" exists inside class {1}.", tagName, reflectedControl.ControlType.FullName);
+					return;
+				}
+
+				// There's no direct property, but this control has a default collection property, so this child
+				// control will be stuffed into that collection by ASP.NET.  
+				ParseTagIntoDefaultCollection(tag, reflectedControl);
 				return;
 			}
+
 			Verbose("Found <{0}> tag that matches a property in class {1}.", tagName, reflectedControl.ControlType.FullName);
 
 			// Early-out:  If this is a self-closing tag, we don't need to process its children.
@@ -1115,6 +1137,42 @@ namespace Redesigner.Library
 				ParseText(tagName, null);
 				_shouldGenerateOutput = wasGeneratingOutput;
 			}
+		}
+
+		/// <summary>
+		/// Found a tag that belongs in the default collection of the current server control.
+		/// </summary>
+		/// <param name="tag">The tag that we are attempting to parse.</param>
+		/// <param name="reflectedControl">The control with the collection into which this tag will be placed.</param>
+		private void ParseTagIntoDefaultCollection(Tag tag, ReflectedControl reflectedControl)
+		{
+			string tagName = tag.TagName;
+
+			ReflectedControlProperty reflectedControlProperty = reflectedControl.DefaultCollectionProperty;
+			Verbose("This <{0}> tag describes a control that belongs in the default control collection, \"{1}\".",
+				tagName, reflectedControlProperty.PropertyName);
+
+			ReflectedControl childControl = _reflectedControlCollection.GetControl(_compileContext, tag, _allTypes);
+
+			if (childControl == null)
+			{
+				Error("No control type exists that matches tag <{0}>.", tagName);
+				return;
+			}
+
+			// Visual Studio will also generate a declaration for this control if it has an ID, so we have to follow the same behavior.
+			if (_shouldGenerateOutput)
+			{
+				_outputControls.Add(new OutputControl
+                {
+                	Name = tag["id"],
+                	ReflectedControl = childControl,
+                });
+			}
+
+			if (tag.IsEmpty) return;
+
+			ParseText(tagName, reflectedControlProperty.CollectionItemTypes);
 		}
 
 		#endregion

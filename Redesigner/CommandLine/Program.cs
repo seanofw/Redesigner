@@ -116,6 +116,11 @@ Options:
   --generate        Generate replacement designer file(s) for the given
                     pages/controls. [default]
 
+  --verbose         Turn on verbose logging of page processing, which can help
+                    locate and diagnose errors.
+
+  --quiet           Turn off all messages except errors.
+
 "));
 					return (int)ExitCode.Help;
 

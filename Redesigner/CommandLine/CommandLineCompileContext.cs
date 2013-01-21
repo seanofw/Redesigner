@@ -70,9 +70,14 @@ namespace Redesigner.CommandLine
 		/// <summary>
 		/// Called to notify us when the current file has finished processing.
 		/// </summary>
-		/// <param name="filename"></param>
-		public void EndFile(string filename)
+		/// <param name="filename">The name of the file we just finished.</param>
+		/// <param name="succeeded">Whether processing that file succeeded.</param>
+		public void EndFile(string filename, bool succeeded)
 		{
+			if (!succeeded)
+			{
+				Console.WriteLine(string.Empty);
+			}
 		}
 
 		/// <summary>

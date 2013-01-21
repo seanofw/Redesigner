@@ -53,12 +53,12 @@ namespace Redesigner.Library
 		/// <summary>
 		/// This line begins a namespace (whose name is matched as the capture "namespace").
 		/// </summary>
-		private static readonly Regex _isNamespaceDeclaration = new Regex(@"^[\x00-\x20]*namespace[\x00-\x20]+(?<namespace>[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*)[\x00-\x20]*\{[\x00-\x20]*$", RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+		private static readonly Regex _isNamespaceDeclaration = new Regex(@"^[\x00-\x20]*namespace[\x00-\x20]+(?<namespace>[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*)[\x00-\x20]*(?<curlybrace>\{?)[\x00-\x20]*$", RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
 		/// <summary>
 		/// This line begins a public partial class (whose name is matched as the capture "classname").
 		/// </summary>
-		private static readonly Regex _isClassDeclaration = new Regex(@"^[\x00-\x20]*public[\x00-\x20]+partial[\x00-\x20]+class[\x00-\x20]+(?<classname>[A-Za-z_][A-Za-z0-9_]*)[\x00-\x20]*\{[\x00-\x20]*$", RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+		private static readonly Regex _isClassDeclaration = new Regex(@"^[\x00-\x20]*public[\x00-\x20]+partial[\x00-\x20]+class[\x00-\x20]+(?<classname>[A-Za-z_][A-Za-z0-9_]*)[\x00-\x20]*(?<curlybrace>\{?)[\x00-\x20]*$", RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
 		/// <summary>
 		/// This line contains a protected property declaration (whose type is matched as the capture "typename"
@@ -146,9 +146,16 @@ namespace Redesigner.Library
 							Match match;
 							if ((match = _isNamespaceDeclaration.Match(currentLine)).Success)
 							{
-								designerInfo.Namespace = match.Groups["namespace"].Value;
-								Verbose("Parsed a valid namespace declaration for namespace \"{0}\".", designerInfo.Namespace);
-								state = ParsingState.BeforeClass;
+								if (string.IsNullOrEmpty(match.Groups["curlybrace"].Value))
+								{
+									Error("There is a valid namespace declaration here, but the opening curly brace is not on the same line.  Visual Studio is strict about curly-brace placement, and probably cannot read this .designer file.");
+								}
+								else
+								{
+									designerInfo.Namespace = match.Groups["namespace"].Value;
+									Verbose("Parsed a valid namespace declaration for namespace \"{0}\".", designerInfo.Namespace);
+									state = ParsingState.BeforeClass;
+								}
 							}
 							else
 							{
@@ -162,9 +169,16 @@ namespace Redesigner.Library
 							Match match;
 							if ((match = _isClassDeclaration.Match(currentLine)).Success)
 							{
-								designerInfo.ClassName = match.Groups["classname"].Value;
-								Verbose("Parsed a valid class declaration for class \"{0}\".", designerInfo.ClassName);
-								state = ParsingState.InsideClass;
+								if (string.IsNullOrEmpty(match.Groups["curlybrace"].Value))
+								{
+									Error("There is a valid class declaration here, but the opening curly brace is not on the same line.  Visual Studio is strict about curly-brace placement, and probably cannot read this .designer file.");
+								}
+								else
+								{
+									designerInfo.ClassName = match.Groups["classname"].Value;
+									Verbose("Parsed a valid class declaration for class \"{0}\".", designerInfo.ClassName);
+									state = ParsingState.InsideClass;
+								}
 							}
 							else
 							{
