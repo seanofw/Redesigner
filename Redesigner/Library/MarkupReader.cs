@@ -401,7 +401,7 @@ namespace Redesigner.Library
 		/// That any tags found are implicitly runat="server" tags, and that they must be instances of (or inherit
 		/// from) the given type of tags.  This parameter is primarily for use during processing of nested
 		/// IEnumerable properties.</param>
-		private void ParseText(string untilEndTag, IEnumerable<Type> requiredTagTypes)
+		private void ParseText(string untilEndTag, ICollection<Type> requiredTagTypes)
 		{
 			do
 			{
@@ -878,7 +878,6 @@ namespace Redesigner.Library
 			else
 			{
 				Warning("The <%@ Register %> directive should have either a Src/TagName attribute or a Namespace attribute.  Skipping directive.");
-				return;
 			}
 		}
 

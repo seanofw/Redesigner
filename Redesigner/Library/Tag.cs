@@ -203,7 +203,7 @@ namespace Redesigner.Library
 				{
 					stringBuilder.Append(" ");
 				}
-				stringBuilder.Append(tagAttribute.ToString());
+				stringBuilder.Append(tagAttribute);
 			}
 
 			if (IsEmpty)

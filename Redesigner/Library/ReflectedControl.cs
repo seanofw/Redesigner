@@ -73,12 +73,12 @@ namespace Redesigner.Library
 		/// <summary>
 		/// The [ParseChildren] attribute for this control, if one exists.
 		/// </summary>
-		public readonly System.Web.UI.ParseChildrenAttribute ParseChildrenAttribute;
+		public readonly ParseChildrenAttribute ParseChildrenAttribute;
 
 		/// <summary>
 		/// The [ControlBuilder] attribute for this control, if one exists.
 		/// </summary>
-		public readonly System.Web.UI.ControlBuilderAttribute ControlBuilderAttribute;
+		public readonly ControlBuilderAttribute ControlBuilderAttribute;
 
 		/// <summary>
 		/// All of the properties for this control that can be set within the markup.
@@ -139,12 +139,13 @@ namespace Redesigner.Library
 
 			// If we are restricted to only load certain types (such as the nested not-a-control instances inside a DataPager control),
 			// check that the control we have found matches one of those types.
-			if (!allowedTypes.Any(t => t.IsAssignableFrom(ControlType)))
+			IList<Type> allowedTypesList = allowedTypes as IList<Type> ?? allowedTypes.ToList();
+			if (!allowedTypesList.Any(t => t.IsAssignableFrom(ControlType)))
 			{
 				StringBuilder stringBuilder = new StringBuilder();
 				stringBuilder.AppendFormat("Found matching type for <{0}>, but it is a {1}, not one of the {2} allowed types:\r\n",
-					tag.TagName, ControlType.FullName, allowedTypes.Count());
-				foreach (Type allowedType in allowedTypes)
+					tag.TagName, ControlType.FullName, allowedTypesList.Count);
+				foreach (Type allowedType in allowedTypesList)
 				{
 					stringBuilder.AppendFormat("- {0}\r\n", allowedType.FullName);
 				}
@@ -152,11 +153,11 @@ namespace Redesigner.Library
 			}
 
 			// Extract the [ParseChildren] attribute, if it has one.
-			System.Web.UI.ParseChildrenAttribute[] parseChildrenAttributes = (System.Web.UI.ParseChildrenAttribute[])ControlType.GetCustomAttributes(typeof(System.Web.UI.ParseChildrenAttribute), true);
+			ParseChildrenAttribute[] parseChildrenAttributes = (ParseChildrenAttribute[])ControlType.GetCustomAttributes(typeof(ParseChildrenAttribute), true);
 			ParseChildrenAttribute = parseChildrenAttributes.Length == 0 ? null : parseChildrenAttributes[0];
 
 			// Extract the [ControlBuilder] attribute, if it has one.
-			System.Web.UI.ControlBuilderAttribute[] controlBuilderAttributes = (System.Web.UI.ControlBuilderAttribute[])ControlType.GetCustomAttributes(typeof(System.Web.UI.ControlBuilderAttribute), true);
+			ControlBuilderAttribute[] controlBuilderAttributes = (ControlBuilderAttribute[])ControlType.GetCustomAttributes(typeof(ControlBuilderAttribute), true);
 			ControlBuilderAttribute = controlBuilderAttributes.Length == 0 ? null : controlBuilderAttributes[0];
 
 			// Extract the type's properties, since their declarations control what's legal in the markup.
@@ -247,7 +248,7 @@ namespace Redesigner.Library
 							Type type = assembly.GetType(tagRegistration.Typename);
 
 							// Make sure we found it, and that it's actually a UserControl of some kind.
-							if (type == null || !typeof(System.Web.UI.UserControl).IsAssignableFrom(type)) break;
+							if (type == null || !typeof(UserControl).IsAssignableFrom(type)) break;
 
 							// We found it, so return it.
 							matchingTagRegistration = tagRegistration;
@@ -363,7 +364,9 @@ namespace Redesigner.Library
 				{
 					ReflectedControlProperty previousProperty = controlProperties[lowerName];
 					Type previousPropertyDeclaringType = previousProperty.PropertyInfo.DeclaringType;
-					PropertyInfo baseProperty = previousPropertyDeclaringType.BaseType.GetProperty(lowerName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
+					PropertyInfo baseProperty = previousPropertyDeclaringType != null && previousPropertyDeclaringType.BaseType != null
+						? previousPropertyDeclaringType.BaseType.GetProperty(lowerName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase)
+						: null;
 					if (baseProperty == null)
 					{
 						compileContext.Warning(string.Format("The server control \"{0}\" contains multiple properties named \"{1}\".  Keeping the {2} declaration and discarding the {3} declaration.",

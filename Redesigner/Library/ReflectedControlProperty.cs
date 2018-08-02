@@ -79,9 +79,9 @@ namespace Redesigner.Library
 		public readonly bool IsCollectionProperty;
 
 		/// <summary>
-		/// If this property is an IEnumerable type, these are the types of objects that can be added to it via its Add() methods.
+		/// If this property is an ICollection type, these are the types of objects that can be added to it via its Add() methods.
 		/// </summary>
-		public readonly IEnumerable<Type> CollectionItemTypes;
+		public readonly ICollection<Type> CollectionItemTypes;
 
 		/// <summary>
 		/// The name of this property.
@@ -145,8 +145,8 @@ namespace Redesigner.Library
 		/// to see what they accept.
 		/// </summary>
 		/// <param name="collectionType">The collection type to examine.</param>
-		/// <returns>An IEnumerable of all of the different kinds of items that may be added to this collection.</returns>
-		private static IEnumerable<Type> GetCollectionItemTypes(Type collectionType)
+		/// <returns>An ICollection of all of the different kinds of items that may be added to this collection.</returns>
+		private static ICollection<Type> GetCollectionItemTypes(Type collectionType)
 		{
 			MethodInfo[] collectionMethods = collectionType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
 

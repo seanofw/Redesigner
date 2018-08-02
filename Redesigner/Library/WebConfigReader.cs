@@ -73,9 +73,9 @@ namespace Redesigner.Library
 				compileContext.Verbose("\"{0}\" loaded as an XDocument.", filename);
 
 				// Find the <add> declarations in the <configuration><system.web><controls> section.
-				IEnumerable<XElement> adds = ExtractAddSectionFromWebConfig(webConfig, filename);
+				IList<XElement> adds = ExtractAddSectionFromWebConfig(webConfig, filename);
 
-				compileContext.Verbose("Found {0} <add> declarations.", adds.Count());
+				compileContext.Verbose("Found {0} <add> declarations.", adds.Count);
 
 				// Parse the <add> declarations into a TagRegistrations list.
 				List<TagRegistration> tagRegistrations = new List<TagRegistration>();
@@ -140,7 +140,7 @@ namespace Redesigner.Library
 		/// Extract and validate the &lt;add&gt; section from the loaded XDocument.
 		/// </summary>
 		/// <returns>All of the &lt;add&gt; declarations found inside the configuration/system.web/pages/controls section of the given XDocument.</returns>
-		private IEnumerable<XElement> ExtractAddSectionFromWebConfig(XDocument webConfig, string filename)
+		private IList<XElement> ExtractAddSectionFromWebConfig(XDocument webConfig, string filename)
 		{
 			if (webConfig == null)
 				throw new RedesignerException("XDocument.Load for \"{0}\" returned null.", filename);
@@ -161,7 +161,7 @@ namespace Redesigner.Library
 			if (controls == null)
 				throw new RedesignerException("\"{0}\" is missing its required <configuration><system.web><pages><controls> section.", filename);
 
-			IEnumerable<XElement> adds = controls.Elements();
+			IList<XElement> adds = controls.Elements().ToList();
 			if (adds == null)
 				throw new RedesignerException("\"{0}\" contains no <add> control declarations in its <configuration><system.web><pages><controls> section.", filename);
 

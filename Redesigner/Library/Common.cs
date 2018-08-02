@@ -75,7 +75,8 @@ namespace Redesigner.Library
 		/// <param name="websiteDllFileName">The disk path to the website's DLL.</param>
 		public static bool GenerateDesignerFiles(ICompileContext compileContext, IEnumerable<string> filenames, string rootPath, string websiteDllFileName)
 		{
-			int filenameCount = filenames.Count();
+			IList<string> filenameList = filenames as IList<string> ?? filenames.ToList();
+			int filenameCount = filenameList.Count;
 			compileContext.BeginTask(filenameCount);
 
 			// Load and parse the "web.config".
@@ -117,7 +118,7 @@ namespace Redesigner.Library
 
 			// Now that all the setup is done, load and parse each individual markup file into its own .designer.cs output file.
 			bool result = true;
-			foreach (string filename in filenames)
+			foreach (string filename in filenameList)
 			{
 				compileContext.Verbose("Begin processing \"{0}\"...", filename);
 				compileContext.Verbose("");
@@ -205,7 +206,8 @@ namespace Redesigner.Library
 		/// <returns>True if all designer files pass inspection; false if any of them fail.</returns>
 		public static bool VerifyDesignerFiles(ICompileContext compileContext, IEnumerable<string> filenames, string rootPath, string websiteDllFileName)
 		{
-			int filenameCount = filenames.Count();
+			IList<string> filenameList = filenames as IList<string> ?? filenames.ToList();
+			int filenameCount = filenameList.Count;
 			compileContext.BeginTask(filenameCount);
 
 			// Load and parse the "web.config".
@@ -248,7 +250,7 @@ namespace Redesigner.Library
 			bool result = true;
 
 			// Now that all the setup is done, load and parse each individual markup file into its own .designer.cs output file.
-			foreach (string filename in filenames)
+			foreach (string filename in filenameList)
 			{
 				compileContext.Verbose("Begin processing \"{0}\"...", filename);
 				compileContext.Verbose("");
@@ -618,21 +620,22 @@ namespace Redesigner.Library
 		/// <returns>The single joined string.</returns>
 		public static string Join(IEnumerable<string> items, string separator)
 		{
-			switch (items.Count())
+			IList<string> itemList = items as IList<string> ?? items.ToArray();
+			switch (itemList.Count)
 			{
 				case 0:
 					return string.Empty;
 
 				case 1:
-					return items.First();
+					return itemList[0];
 
 				case 2:
-					return items.First() + separator + items.Skip(1).Take(1);
+					return itemList[0] + separator + itemList[1];
 
 				default:
 					StringBuilder stringBuilder = new StringBuilder();
 					bool isFirst = true;
-					foreach (string item in items)
+					foreach (string item in itemList)
 					{
 						if (!isFirst)
 						{
