@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Redesigner")]
-[assembly: AssemblyCopyright("Copyright © Sean Werkema 2012")]
+[assembly: AssemblyCopyright("Copyright © Sean Werkema 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

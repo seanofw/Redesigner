@@ -2,7 +2,7 @@
 //
 //  Redesigner
 //
-//  Copyright (c) 2012-3 by Sean Werkema
+//  Copyright (c) 2012-8 by Sean Werkema
 //  All rights reserved.
 //
 //  This software is released under the terms of the "New BSD License," as follows:
