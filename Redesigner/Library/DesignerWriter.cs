@@ -99,7 +99,7 @@ namespace {1} {{
 				markupInfo.ClassType.FullName, markupInfo.OutputControls.Count());
 
 			// Get the actual runtime version from the System.Web assembly itself.
-			string runtimeVersion = markupInfo.Assemblies[Common.SystemWebAssemblyName].ImageRuntimeVersion;
+			string runtimeVersion = markupInfo.Assemblies[Common.SystemWebAssemblyName20].ImageRuntimeVersion;
 			if (runtimeVersion.StartsWith("v"))
 			{
 				runtimeVersion = runtimeVersion.Substring(1);

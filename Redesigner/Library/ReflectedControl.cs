@@ -98,7 +98,7 @@ namespace Redesigner.Library
 		private static readonly TagRegistration _htmlTagRegistration = new TagRegistration
 		{
 			Kind = TagRegistrationKind.HtmlControl,
-			AssemblyFilename = Common.SystemWebAssemblyName,
+			AssemblyFilename = Common.SystemWebAssemblyName20,
 			Namespace = "System.Web.UI.HtmlControls",
 			TagPrefix = string.Empty,
 		};
