@@ -107,6 +107,44 @@ namespace Redesigner.Library
 		};
 
 		/// <summary>
+		/// Get the default set of always-loaded assembly names.  This set will
+		/// vary depending on which version of .NET you are running on.
+		/// </summary>
+		public static IList<string> DefaultAssemblyNames
+		{
+			get
+			{
+				switch (Environment.Version.Major)
+				{
+					case 1:
+					case 2:
+						return _standardTagRegistrations20.Where(r => !string.IsNullOrEmpty(r.AssemblyFilename)).Select(r => r.AssemblyFilename).Distinct().ToArray();
+					default:
+						return _standardTagRegistrations40.Where(r => !string.IsNullOrEmpty(r.AssemblyFilename)).Select(r => r.AssemblyFilename).Distinct().ToArray();
+				}
+			}
+		}
+
+		/// <summary>
+		/// Get the default set of always-available ASP tag registrations.
+		/// This set will vary depending on which version of .NET you are running on.
+		/// </summary>
+		public static IList<TagRegistration> DefaultTagRegistrations
+		{
+			get
+			{
+				switch (Environment.Version.Major)
+				{
+					case 1:
+					case 2:
+						return _standardTagRegistrations20.ToArray();	// Return a copy
+					default:
+						return _standardTagRegistrations40.ToArray();   // Return a copy
+				}
+			}
+		}
+
+		/// <summary>
 		/// For the given set of .aspx or .ascx files, generate all of their designer files.
 		/// </summary>
 		/// <param name="compileContext">The context in which errors are to be reported.</param>
@@ -135,16 +173,7 @@ namespace Redesigner.Library
 			// in the web.config, and, of course, the website's DLL itself.
 			AssemblyLoader assemblyLoader = new AssemblyLoader();
 			List<string> assemblyNames = new List<string>();
-			switch (Environment.Version.Major)
-			{
-				case 1:
-				case 2:
-					assemblyNames.AddRange(_standardTagRegistrations20.Where(r => !string.IsNullOrEmpty(r.AssemblyFilename)).Select(r => r.AssemblyFilename).Distinct());
-					break;
-				default:
-					assemblyNames.AddRange(_standardTagRegistrations40.Where(r => !string.IsNullOrEmpty(r.AssemblyFilename)).Select(r => r.AssemblyFilename).Distinct());
-					break;
-			}
+			assemblyNames.AddRange(DefaultAssemblyNames);
 			assemblyNames.AddRange(webConfigReader.TagRegistrations.Where(r => !string.IsNullOrEmpty(r.AssemblyFilename)).Select(r => r.AssemblyFilename).Distinct());
 			string dllFullPath = Path.GetFullPath(websiteDllFileName);
 			assemblyNames.Add(dllFullPath);
@@ -154,7 +183,7 @@ namespace Redesigner.Library
 
 			// Add the default tag registrations, including those from System.Web and any declared in the "web.config".
 			List<TagRegistration> tagRegistrations = new List<TagRegistration>();
-			tagRegistrations.AddRange(_standardTagRegistrations20);
+			tagRegistrations.AddRange(DefaultTagRegistrations);
 			tagRegistrations.AddRange(webConfigReader.TagRegistrations);
 
 			// Spin through any user controls that were declared in the web.config and connect them to their actual
@@ -275,7 +304,7 @@ namespace Redesigner.Library
 			// in the web.config, and, of course, the website's DLL itself.
 			AssemblyLoader assemblyLoader = new AssemblyLoader();
 			List<string> assemblyNames = new List<string>();
-			assemblyNames.AddRange(_standardTagRegistrations20.Where(r => !string.IsNullOrEmpty(r.AssemblyFilename)).Select(r => r.AssemblyFilename).Distinct());
+			assemblyNames.AddRange(DefaultAssemblyNames);
 			assemblyNames.AddRange(webConfigReader.TagRegistrations.Where(r => !string.IsNullOrEmpty(r.AssemblyFilename)).Select(r => r.AssemblyFilename).Distinct());
 			string dllFullPath = Path.GetFullPath(websiteDllFileName);
 			assemblyNames.Add(dllFullPath);
@@ -285,7 +314,7 @@ namespace Redesigner.Library
 
 			// Add the default tag registrations, including those from System.Web and any declared in the "web.config".
 			List<TagRegistration> tagRegistrations = new List<TagRegistration>();
-			tagRegistrations.AddRange(_standardTagRegistrations20);
+			tagRegistrations.AddRange(DefaultTagRegistrations);
 			tagRegistrations.AddRange(webConfigReader.TagRegistrations);
 
 			// Spin through any user controls that were declared in the web.config and connect them to their actual

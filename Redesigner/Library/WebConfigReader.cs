@@ -29,6 +29,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
@@ -147,22 +148,34 @@ namespace Redesigner.Library
 
 			XElement configuration = webConfig.Element("configuration");
 			if (configuration == null)
-				throw new RedesignerException("\"{0}\" is missing its required <configuration> section.", filename);
+				throw new RedesignerException("\"{0}\" is missing its required <configuration> root element.", filename);
 
 			XElement systemWeb = configuration.Element("system.web");
 			if (systemWeb == null)
-				throw new RedesignerException("\"{0}\" is missing its required <configuration><system.web> section.", filename);
+			{
+				if (Environment.Version.Major <= 2)
+					throw new RedesignerException("\"{0}\" is missing its required <configuration><system.web> section.", filename);
+				systemWeb = new XElement("system.web");
+			}
 
 			XElement pages = systemWeb.Element("pages");
 			if (pages == null)
-				throw new RedesignerException("\"{0}\" is missing its required <configuration><system.web><pages><controls> section.", filename);
+			{
+				if (Environment.Version.Major <= 2)
+					throw new RedesignerException("\"{0}\" is missing its required <configuration><system.web><pages><controls> section.", filename);
+				pages = new XElement("pages");
+			}
 
 			XElement controls = pages.Element("controls");
 			if (controls == null)
-				throw new RedesignerException("\"{0}\" is missing its required <configuration><system.web><pages><controls> section.", filename);
+			{
+				if (Environment.Version.Major <= 2)
+					throw new RedesignerException("\"{0}\" is missing its required <configuration><system.web><pages><controls> section.", filename);
+				controls = new XElement("controls");
+			}
 
 			IList<XElement> adds = controls.Elements().ToList();
-			if (adds == null)
+			if (!adds.Any() && Environment.Version.Major <= 2)
 				throw new RedesignerException("\"{0}\" contains no <add> control declarations in its <configuration><system.web><pages><controls> section.", filename);
 
 			return adds;

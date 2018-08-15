@@ -135,7 +135,9 @@ namespace Redesigner.Library
 				ControlType = FindMatchingControlType(TagPrefix, TagName, tagRegistrations, assemblies, out TagRegistration);
 			}
 			if (ControlType == null)
-				throw new InvalidOperationException(string.Format("No matching type for <{0}> was found in any of the loaded assemblies.", tag.TagName));
+				throw new InvalidOperationException(string.Format("No matching type for <{0}> was found in any of these locations:\n{1}",
+					tag.TagName,
+					string.Join("", tagRegistrations.Where(tr => tr.TagPrefix == TagPrefix).Select(tr => " - Namespace " + tr.Namespace + " in " + tr.AssemblyFilename).ToArray())));
 
 			// If we are restricted to only load certain types (such as the nested not-a-control instances inside a DataPager control),
 			// check that the control we have found matches one of those types.

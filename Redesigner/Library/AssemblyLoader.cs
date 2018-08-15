@@ -30,16 +30,18 @@
 //-------------------------------------------------------------------------------------------------
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using System.Linq;
 
 namespace Redesigner.Library
 {
 	/// <summary>
 	/// This class loads the given assemblies for reflection, caching them to avoid reloading them multiple times.
 	/// </summary>
-	public class AssemblyLoader
+	public class AssemblyLoader : ICollection<Assembly>
 	{
 		#region Properties and Fields
 
@@ -154,6 +156,80 @@ namespace Redesigner.Library
 			}
 
 			return assembly;
+		}
+
+		#endregion
+
+		#region IEnumerable/ICollection implementation
+
+		/// <summary>
+		/// Get the current count of loaded assemblies.
+		/// </summary>
+		public int Count { get { return _loadedAssemblies.Count; } }
+
+		/// <summary>
+		/// This collection is effectively read-only, unless you use the PreloadAssemblies() method.
+		/// </summary>
+		public bool IsReadOnly { get { return true; } }
+
+		/// <summary>
+		/// Enumerate the assemblies in this collection (in no particular order).
+		/// </summary>
+		public IEnumerator<Assembly> GetEnumerator()
+		{
+			return _loadedAssemblies.Values.GetEnumerator();
+		}
+
+		/// <summary>
+		/// Enumerate the assemblies in this collection (in no particular order).
+		/// </summary>
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+
+		/// <summary>
+		/// Determine if this collection contains the given assembly.
+		/// </summary>
+		/// <param name="item">The assembly to check for.</param>
+		/// <returns>True if the assembly was preloaded in this collection, false if it was not.</returns>
+		public bool Contains(Assembly item)
+		{
+			return _loadedAssemblies.Values.Contains(item);
+		}
+
+		/// <summary>
+		/// Copy the set of preloaded assemblies to the given array.
+		/// </summary>
+		/// <param name="array">The array to copy to.</param>
+		/// <param name="arrayIndex">The starting offset within the array to copy to.</param>
+		public void CopyTo(Assembly[] array, int arrayIndex)
+		{
+			_loadedAssemblies.Values.CopyTo(array, arrayIndex);
+		}
+
+		/// <summary>
+		/// Add() is not supported, but is required by the ICollection{T} interface.
+		/// </summary>
+		void ICollection<Assembly>.Add(Assembly item)
+		{
+			throw new NotSupportedException("This collection may only be modified by the PreloadAssemblies() method.");
+		}
+
+		/// <summary>
+		/// Clear() is not supported, but is required by the ICollection{T} interface.
+		/// </summary>
+		void ICollection<Assembly>.Clear()
+		{
+			throw new NotSupportedException("This collection may only be modified by the PreloadAssemblies() method.");
+		}
+
+		/// <summary>
+		/// Remove() is not supported, but is required by the ICollection{T} interface.
+		/// </summary>
+		bool ICollection<Assembly>.Remove(Assembly item)
+		{
+			throw new NotSupportedException("This collection may only be modified by the PreloadAssemblies() method.");
 		}
 
 		#endregion
