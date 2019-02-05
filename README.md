@@ -33,7 +33,7 @@ A simple use to regenerate a `.designer` file for `MyPage.aspx` might look like 
 reflect against your website's DLL, so if you can't compile your website's DLL, do whatever
 you have to do to hack your website until you can get it to compile.
 	
-**Compatibility Note**:  _If you're using ASP.NET version 4.0 or higher, you should use the [`net40` feature branch](../branches/net40), or you may see errors describing "unknown controls."  The `master` branch of the Redesigner code targets .NET 2.x/3.5._
+**Compatibility Note**:  _If you're using ASP.NET version 4.0 or higher, you should use the [`net40` feature branch](https://github.com/seanofw/Redesigner/tree/branches/net40), or you may see errors describing "unknown controls."  The `master` branch of the Redesigner code targets .NET 2.x/3.5._
 
 Currently, Redesigner can generate `.designer.cs` files for `.aspx` and `.ascx` files.  It can
 handle `<%@ Register %>` directives found in markup, and registered namespaces and user
