@@ -47,15 +47,20 @@ namespace Redesigner.Library
 		/// <summary>
 		/// The canonical name of the "System.Web" assembly.
 		/// </summary>
-		public const string SystemWebAssemblyName = "System.Web, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+		public const string SystemWebAssemblyName = "System.Web, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
 
-		/// <summary>
-		/// The standard tag registrations that are always included, regardless of whether they
-		/// are mentioned in the "web.config" or markup.
-		/// 
-		/// Note that HTML server controls are handled specially and are not included here.
-		/// </summary>
-		private static readonly IEnumerable<TagRegistration> _standardTagRegistrations = new List<TagRegistration>
+        /// <summary>
+        /// The canonical name of the "System.Web.Extensions" assembly.
+        /// </summary>
+        public const string SystemWebExtensionsAssemblyName = "System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+
+        /// <summary>
+        /// The standard tag registrations that are always included, regardless of whether they
+        /// are mentioned in the "web.config" or markup.
+        /// 
+        /// Note that HTML server controls are handled specially and are not included here.
+        /// </summary>
+        private static readonly IEnumerable<TagRegistration> _standardTagRegistrations = new List<TagRegistration>
 		{
 			new TagRegistration
 			{
@@ -64,7 +69,28 @@ namespace Redesigner.Library
 				Namespace = "System.Web.UI.WebControls",
 				TagPrefix = "asp",
 			},
-		};
+            new TagRegistration
+            {
+                Kind = TagRegistrationKind.Namespace,
+                AssemblyFilename = SystemWebAssemblyName,
+                Namespace = "System.Web.UI",
+                TagPrefix = "asp",
+            },
+            new TagRegistration
+            {
+                Kind = TagRegistrationKind.Namespace,
+                AssemblyFilename = SystemWebExtensionsAssemblyName,
+                Namespace = "System.Web.UI.WebControls",
+                TagPrefix = "asp",
+            },
+            new TagRegistration
+            {
+                Kind = TagRegistrationKind.Namespace,
+                AssemblyFilename = SystemWebExtensionsAssemblyName,
+                Namespace = "System.Web.UI",
+                TagPrefix = "asp",
+            },
+        };
 
 		/// <summary>
 		/// For the given set of .aspx or .ascx files, generate all of their designer files.
