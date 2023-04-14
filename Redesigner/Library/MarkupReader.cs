@@ -749,7 +749,7 @@ namespace Redesigner.Library
 			if (string.IsNullOrEmpty(tag.TagName))
 			{
 				// The main directive's type has been unfortunately omitted.  This is legal, but really not a very good practice.
-				Warning("Main <%@ ... %> directive is missing the keyword \"{1}\".",  _filename.ToLower().EndsWith(".ascx") ? "Control" : "Page");
+				Warning("Main <%@ ... %> directive is missing the keyword \"{0}\".",  _filename.ToLower().EndsWith(".ascx") ? "Control" : "Page");
 			}
 			else if (tag.TagName == "page")
 			{

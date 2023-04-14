@@ -247,7 +247,7 @@ namespace Redesigner.Library
 							Type type = assembly.GetType(tagRegistration.Typename);
 
 							// Make sure we found it, and that it's actually a UserControl of some kind.
-							if (type == null || !typeof(System.Web.UI.UserControl).IsAssignableFrom(type)) break;
+							if (type == null || !typeof(System.Web.UI.UserControl).IsAssignableFrom(type)) continue;
 
 							// We found it, so return it.
 							matchingTagRegistration = tagRegistration;
@@ -263,7 +263,7 @@ namespace Redesigner.Library
 							Type type = assembly.GetType(tagRegistration.Namespace + "." + tagName, false, true);
 
 							// Make sure we found it.
-							if (type == null) break;
+							if (type == null) continue;
 
 							// We found it, so return it.
 							matchingTagRegistration = tagRegistration;
